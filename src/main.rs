@@ -10,6 +10,6 @@ use routes::*;
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![index, category, archive, tag])
+        .mount("/", routes![index, in_category, has_tag, articles])
         .launch();
 }

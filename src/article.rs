@@ -1,8 +1,11 @@
 use serde::{Serialize, Deserialize};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Cursor};
+use rocket::response::Responder;
+use rocket::{Request, Response, response};
+use rocket::http::ContentType;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArticleCard {
     title: String,
     time: String,
@@ -39,9 +42,67 @@ impl ArticleCard {
     }
 }
 
+pub(crate) trait Search {
+    fn in_category(&self, category: &str) -> (Self, bool) where Self: Sized;
+    fn has_tag(&self, tag: &str) -> (Self, bool) where Self: Sized;
+
+    fn search_all(&self, category: &str, tag: &str) -> (Self, bool) where Self: Sized;
+}
+
+impl Search for Vec<ArticleCard> {
+    fn in_category(&self, category: &str) -> (Self, bool) {
+        let articles = self.clone().into_iter().filter(|article| {
+            article.is_in_category(category)
+        }).collect::<Vec<_>>();
+
+        if articles.len() > 0 {
+            (articles, true)
+        } else {
+            (articles, false)
+        }
+    }
+
+    fn has_tag(&self, tag: &str) -> (Self, bool) {
+        let articles = self.clone().into_iter().filter(|article| {
+            article.has_tag(tag)
+        }).collect::<Vec<_>>();
+
+        if articles.len() > 0 {
+            (articles, true)
+        } else {
+            (articles, false)
+        }
+    }
+
+    fn search_all(&self, category: &str, tag: &str) -> (Self, bool) {
+        let (articles, in_category) = self.in_category(category);
+        if in_category {
+            let (articles, has_tag) = articles.has_tag(tag);
+            if has_tag {
+                (articles, true)
+            } else {
+                (articles, false)
+            }
+        } else { (articles, false) }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ArticleList(pub(crate) Vec<ArticleCard>);
+
+impl<'r> Responder<'r> for ArticleList {
+    fn respond_to(self, request: &Request) -> response::Result<'r> {
+        Response::build()
+            .sized_body(Cursor::new(serde_json::to_string(&self).unwrap()))
+            .header(ContentType::JSON)
+            .ok()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::article::ArticleCard;
+    use crate::article::Search;
 
     #[test]
     fn base() {
@@ -87,5 +148,55 @@ mod test {
 
         assert_eq!(cards[0].has_tag(tag), false);
         assert_eq!(cards[0].is_in_category(category), false)
+    }
+
+    #[test]
+    fn vec_category_assert() {
+        let path = "src/resource/json/articleCards.json";
+        let cards = ArticleCard::from(path);
+
+        let category = "test";
+        let result = cards.in_category(category);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, true);
+
+        let category = "lalilulelo";
+        let result = cards.in_category(category);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, false);
+    }
+
+    #[test]
+    fn vec_tag_assert() {
+        let path = "src/resource/json/articleCards.json";
+        let cards = ArticleCard::from(path);
+
+        let tag = "rust";
+        let result = cards.has_tag(tag);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, true);
+
+        let tag = "kotlin";
+        let result = cards.has_tag(tag);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, false);
+    }
+
+    #[test]
+    fn vec_both_assert() {
+        let path = "src/resource/json/articleCards.json";
+        let cards = ArticleCard::from(path);
+
+        let category = "test";
+        let tag = "rust";
+        let result = cards.search_all(category, tag);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, true);
+
+        let category = "lalilulelo";
+        let tag = "kotlin";
+        let result = cards.search_all(category, tag);
+        println!("{:?}", result.0);
+        assert_eq!(result.1, false);
     }
 }

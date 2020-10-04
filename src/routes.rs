@@ -1,42 +1,49 @@
+use crate::article::{ArticleCard, Search, ArticleList};
+use rocket::response::content::Json;
+
 /// home route
 #[get("/")]
 pub fn index() -> &'static str {
     "Hello, world!"
 }
 
-/// time line infor
-#[get("/archive")]
-pub fn archive() -> &'static str {
-    "archive"
-}
+type ArticleCards = Json<ArticleList>;
 
 /// different kinds article route
-#[get("/category?<kind>")]
-pub fn category(kind: Option<String>) -> String {
-    match kind {
-        None => {
-            String::from("all categories")
-        }
-        Some(kind) => {
-            format!("all article in the category: {}", kind)
-        }
-    }
+#[get("/category/<category>")]
+pub fn in_category(category: String) -> ArticleCards {
+    articles(None, Some(category))
 }
 
 /// different tag article route
-#[get("/tag?<tag>")]
-pub fn tag(tag: Option<String>) -> String {
-    match tag {
-        None => {
-            String::from("all tags")
-        }
-        Some(tag) => {
-            format!("all article in the tags: {}", tag)
-        }
-    }
+#[get("/tag/<tag>")]
+pub fn has_tag(tag: String) -> ArticleCards {
+    articles(Some(tag), None)
 }
 
-#[get("/articles?<tag>&<category>")]
-pub fn articles(tag: Option<String>, category: Option<String>) -> String {
-    format!("tag={},category={}", tag.unwrap(), category.unwrap())
+#[get("/articles?<category>&<tag>")]
+pub fn articles(tag: Option<String>, category: Option<String>) -> ArticleCards {
+    //TODO: 将json文件读取改成数据库读取
+    let articles = ArticleCard::from("src/resource/json/articleCards.json");
+
+    let article_list = match (tag, category) {
+        (None, None) => vec![],
+        (None, Some(category)) => {
+            let (articles, _) = articles.in_category(&category);
+
+            articles
+        }
+        (Some(tag), None) => {
+            let (articles, _) = articles.has_tag(&tag);
+            articles
+        }
+        (Some(tag), Some(category)) => {
+            let (articles, _) = articles.search_all(&category, &tag);
+            articles
+        }
+    };
+
+    Json(ArticleList {
+        0: article_list
+    })
 }
