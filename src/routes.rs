@@ -1,5 +1,7 @@
 use crate::article::{ArticleCard, Search, ArticleList};
 use rocket::response::content::Json;
+use std::path::{PathBuf, Path};
+use rocket::response::NamedFile;
 
 /// home route
 #[get("/")]
@@ -47,3 +49,10 @@ pub fn articles(tag: Option<String>, category: Option<String>) -> ArticleCards {
         0: article_list
     })
 }
+
+/// static file route
+#[get("/<file..>", rank = 2)]
+pub fn files(file:PathBuf)->Option<NamedFile>{
+    NamedFile::open(Path::new("static/").join(file)).ok()
+}
+

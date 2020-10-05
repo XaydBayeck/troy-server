@@ -91,7 +91,7 @@ impl Search for Vec<ArticleCard> {
 pub struct ArticleList(pub(crate) Vec<ArticleCard>);
 
 impl<'r> Responder<'r> for ArticleList {
-    fn respond_to(self, request: &Request) -> response::Result<'r> {
+    fn respond_to(self, _request: &Request) -> response::Result<'r> {
         Response::build()
             .sized_body(Cursor::new(serde_json::to_string(&self).unwrap()))
             .header(ContentType::JSON)
@@ -126,7 +126,7 @@ mod test {
 
     #[test]
     fn file() {
-        let path = "src/resource/json/articleCards.json";
+        let path = "static/json/articleCards.json";
         let cards = ArticleCard::from(path);
         let assert_cards = r#"[ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], description: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }]"#;
         assert_eq!(format!("{:?}", cards), assert_cards);
@@ -134,7 +134,7 @@ mod test {
 
     #[test]
     fn assert() {
-        let path = "src/resource/json/articleCards.json";
+        let path = "static/json/articleCards.json";
         let cards = ArticleCard::from(path);
 
         let tag = "rust";
@@ -152,7 +152,7 @@ mod test {
 
     #[test]
     fn vec_category_assert() {
-        let path = "src/resource/json/articleCards.json";
+        let path = "static/json/articleCards.json";
         let cards = ArticleCard::from(path);
 
         let category = "test";
@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn vec_tag_assert() {
-        let path = "src/resource/json/articleCards.json";
+        let path = "static/json/articleCards.json";
         let cards = ArticleCard::from(path);
 
         let tag = "rust";
@@ -184,7 +184,7 @@ mod test {
 
     #[test]
     fn vec_both_assert() {
-        let path = "src/resource/json/articleCards.json";
+        let path = "static/json/articleCards.json";
         let cards = ArticleCard::from(path);
 
         let category = "test";
