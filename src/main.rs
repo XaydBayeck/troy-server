@@ -3,13 +3,16 @@
 #[macro_use]
 extern crate rocket;
 
-mod routes;
 mod article;
+mod routes;
 
 use routes::*;
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![index, in_category, has_tag, articles, files])
+        .mount(
+            "/",
+            routes![index, in_category, has_tag, articles, article, files],
+        )
         .launch();
 }

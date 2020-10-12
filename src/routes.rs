@@ -1,7 +1,7 @@
-use crate::article::{ArticleCard, Search, ArticleList};
+use crate::article::{ArticleCard, ArticleList, Search};
 use rocket::response::content::Json;
-use std::path::{PathBuf, Path};
 use rocket::response::NamedFile;
+use std::path::{Path, PathBuf};
 
 /// home route
 #[get("/")]
@@ -45,14 +45,17 @@ pub fn articles(tag: Option<String>, category: Option<String>) -> ArticleCards {
         }
     };
 
-    Json(ArticleList {
-        0: article_list
-    })
+    Json(ArticleList { 0: article_list })
+}
+
+#[get("/article/<path>")]
+pub fn article(path: String) -> Option<NamedFile> {
+    let path_buf = PathBuf::from("markdown").join(PathBuf::from(path + ".md"));
+    files(path_buf)
 }
 
 /// static file route
 #[get("/<file..>", rank = 2)]
-pub fn files(file:PathBuf)->Option<NamedFile>{
+pub fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
-

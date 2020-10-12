@@ -1,9 +1,9 @@
-use serde::{Serialize, Deserialize};
-use std::fs::File;
-use std::io::{Read, Cursor};
-use rocket::response::Responder;
-use rocket::{Request, Response, response};
 use rocket::http::ContentType;
+use rocket::response::Responder;
+use rocket::{response, Request, Response};
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{Cursor, Read};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArticleCard {
@@ -25,7 +25,9 @@ impl ArticleCard {
     pub fn is_in_category(&self, category: &str) -> bool {
         if self.category == category {
             true
-        } else { false }
+        } else {
+            false
+        }
     }
 
     pub fn has_tag(&self, tag: &str) -> bool {
@@ -43,17 +45,25 @@ impl ArticleCard {
 }
 
 pub(crate) trait Search {
-    fn in_category(&self, category: &str) -> (Self, bool) where Self: Sized;
-    fn has_tag(&self, tag: &str) -> (Self, bool) where Self: Sized;
+    fn in_category(&self, category: &str) -> (Self, bool)
+    where
+        Self: Sized;
+    fn has_tag(&self, tag: &str) -> (Self, bool)
+    where
+        Self: Sized;
 
-    fn search_all(&self, category: &str, tag: &str) -> (Self, bool) where Self: Sized;
+    fn search_all(&self, category: &str, tag: &str) -> (Self, bool)
+    where
+        Self: Sized;
 }
 
 impl Search for Vec<ArticleCard> {
     fn in_category(&self, category: &str) -> (Self, bool) {
-        let articles = self.clone().into_iter().filter(|article| {
-            article.is_in_category(category)
-        }).collect::<Vec<_>>();
+        let articles = self
+            .clone()
+            .into_iter()
+            .filter(|article| article.is_in_category(category))
+            .collect::<Vec<_>>();
 
         if articles.len() > 0 {
             (articles, true)
@@ -63,9 +73,11 @@ impl Search for Vec<ArticleCard> {
     }
 
     fn has_tag(&self, tag: &str) -> (Self, bool) {
-        let articles = self.clone().into_iter().filter(|article| {
-            article.has_tag(tag)
-        }).collect::<Vec<_>>();
+        let articles = self
+            .clone()
+            .into_iter()
+            .filter(|article| article.has_tag(tag))
+            .collect::<Vec<_>>();
 
         if articles.len() > 0 {
             (articles, true)
@@ -83,7 +95,9 @@ impl Search for Vec<ArticleCard> {
             } else {
                 (articles, false)
             }
-        } else { (articles, false) }
+        } else {
+            (articles, false)
+        }
     }
 }
 
@@ -110,7 +124,11 @@ mod test {
             title: String::from("测试文章"),
             time: String::from("2020-10-04"),
             category: String::from("test"),
-            tags: vec![String::from("test"), String::from("rust"), String::from("json")],
+            tags: vec![
+                String::from("test"),
+                String::from("rust"),
+                String::from("json"),
+            ],
             description: String::from("这是用来测试的文章。"),
         };
 
