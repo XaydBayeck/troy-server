@@ -4,7 +4,9 @@
 extern crate rocket;
 
 mod article;
+mod orm;
 mod routes;
+mod watch;
 
 use routes::*;
 

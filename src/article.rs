@@ -2,16 +2,17 @@ use rocket::http::ContentType;
 use rocket::response::Responder;
 use rocket::{response, Request, Response};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use std::fs::File;
 use std::io::{Cursor, Read};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, FromRow)]
 pub struct ArticleCard {
-    title: String,
-    time: String,
-    category: String,
-    tags: Vec<String>,
-    description: String,
+    pub(crate) title: String,
+    pub(crate) time: String,
+    pub(crate) category: String,
+    pub(crate) tags: Vec<String>,
+    pub(crate) part: String,
 }
 
 impl ArticleCard {
@@ -42,19 +43,22 @@ impl ArticleCard {
 
         result
     }
+
+    #[warn(dead_code)]
+    pub fn to_sql(&self) -> String {
+        let tags = self.tags.iter().fold(String::new(), |tags, tag| tags + tag + ",");
+        format!(
+            "insert into article_card \
+        values (\"{}\",\"{}\",\"{}\",\"{:}\",\"{}\");",
+            &self.title, &self.time, &self.category, tags, &self.part
+        )
+    }
 }
 
-pub(crate) trait Search {
-    fn in_category(&self, category: &str) -> (Self, bool)
-    where
-        Self: Sized;
-    fn has_tag(&self, tag: &str) -> (Self, bool)
-    where
-        Self: Sized;
-
-    fn search_all(&self, category: &str, tag: &str) -> (Self, bool)
-    where
-        Self: Sized;
+pub(crate) trait Search: Sized {
+    fn in_category(&self, category: &str) -> (Self, bool);
+    fn has_tag(&self, tag: &str) -> (Self, bool);
+    fn search_all(&self, category: &str, tag: &str) -> (Self, bool);
 }
 
 impl Search for Vec<ArticleCard> {
@@ -129,7 +133,7 @@ mod test {
                 String::from("rust"),
                 String::from("json"),
             ],
-            description: String::from("这是用来测试的文章。"),
+            part: String::from("这是用来测试的文章。"),
         };
 
         let serialized = serde_json::to_string(&article_card).unwrap();
