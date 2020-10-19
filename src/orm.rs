@@ -32,7 +32,7 @@ mod test {
 
         let article_card = ArticleCard {
             title: String::from("测试文章"),
-            time: String::from("2020-10-04"),
+            time: "".to_string(),
             category: String::from("test"),
             tags: vec![
                 String::from("test"),

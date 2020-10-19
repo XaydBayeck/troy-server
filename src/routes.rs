@@ -26,7 +26,7 @@ pub fn has_tag(tag: String) -> ArticleCards {
 #[get("/articles?<category>&<tag>")]
 pub fn articles(tag: Option<String>, category: Option<String>) -> ArticleCards {
     //TODO: 将json文件读取改成数据库读取
-    let articles = ArticleCard::from("src/resource/json/articleCards.json");
+    let articles = ArticleCard::from(PathBuf::from("static/json/articleCards.json"));
 
     let article_list = match (tag, category) {
         (None, None) => vec![],

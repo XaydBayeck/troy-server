@@ -331,6 +331,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
+ "time",
  "winapi",
 ]
 
@@ -1664,6 +1665,7 @@ checksum = "efd1f82c56340fdf16f2a953d7bda4f8fdffba13d93b00844c25572110b26079"
 name = "troy-server"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "futures",
  "rocket",
  "serde",
