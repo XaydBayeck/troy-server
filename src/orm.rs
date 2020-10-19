@@ -31,6 +31,7 @@ mod test {
         }
 
         let article_card = ArticleCard {
+            name: "test".to_string(),
             title: String::from("测试文章"),
             time: "".to_string(),
             category: String::from("test"),

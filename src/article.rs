@@ -4,25 +4,38 @@ use rocket::{response, Request, Response};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fs::File;
-use std::io::{Cursor, Read};
+use std::io::{Cursor, Read, BufReader, BufRead};
 use std::path::PathBuf;
 use chrono::{NaiveDate, ParseResult};
 
 #[derive(Serialize, Deserialize, Debug, Clone, FromRow)]
 pub struct ArticleCard {
+    pub(crate) name: String,
     pub(crate) title: String,
-    pub time: String,
+    pub(crate) time: String,
     pub(crate) category: String,
     pub(crate) tags: Vec<String>,
     pub(crate) part: String,
 }
 
 impl ArticleCard {
-    pub fn from(file: PathBuf) -> Vec<Self> {
+    /// 小容量下可以一次读取json文件获取数据，大容量下应改用数据库
+    pub fn from_json(file: PathBuf) -> Vec<Self> {
         let mut article_cards = String::new();
         let mut file = File::open(file).unwrap();
         file.read_to_string(&mut article_cards).unwrap();
         serde_json::from_str(&article_cards).unwrap()
+    }
+
+    pub fn from_markdown(md: PathBuf) -> Self {
+        let file = File::open(md).unwrap();
+        let mut fin = BufReader::new(file);
+
+        let mut line = String::new();
+
+        for line in fin.lines() {
+
+        }
     }
 
     pub fn is_in_category(&self, category: &str) -> bool {
@@ -139,6 +152,7 @@ mod test {
     #[test]
     fn base() {
         let article_card = ArticleCard {
+            name: String::from("test_article"),
             title: String::from("测试文章"),
             time: String::from("2020-10-04"),
             category: String::from("test"),
@@ -151,27 +165,19 @@ mod test {
         };
 
         let serialized = serde_json::to_string(&article_card).unwrap();
-        let assert_serialized = r#"{"title":"测试文章","time":"2020-10-04","category":"test","tags":["test","rust","json"],"part":"这是用来测试的文章。"}"#;
+        let assert_serialized = r#"{"name":"test_article","title":"测试文章","time":"2020-10-04","category":"test","tags":["test","rust","json"],"part":"这是用来测试的文章。"}"#;
         assert_eq!(serialized, assert_serialized.to_string());
 
         let deserialized: ArticleCard = serde_json::from_str(&serialized).unwrap();
         let deserialized = format!("{:?}", deserialized);
-        let assert_deserialized = r#"ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是用来测试的文章。" }"#;
+        let assert_deserialized = r#"ArticleCard { name: "test_article", title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是用来测试的文章。" }"#;
         assert_eq!(deserialized, assert_deserialized.to_string());
-    }
-
-    #[test]
-    fn file() {
-        let path = PathBuf::from("static/json/articleCards.json");
-        let cards = ArticleCard::from(path);
-        let assert_cards = r#"[ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }, ArticleCard { title: "测试文章", time: "2020-10-04", category: "test", tags: ["test", "rust", "json"], part: "这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，这是测试文章，" }]"#;
-        assert_eq!(format!("{:?}", cards), assert_cards);
     }
 
     #[test]
     fn assert() {
         let path = PathBuf::from("static/json/articleCards.json");
-        let cards = ArticleCard::from(path);
+        let cards = ArticleCard::from_json(path);
 
         let tag = "rust";
         let category = "test";
@@ -189,7 +195,7 @@ mod test {
     #[test]
     fn vec_category_assert() {
         let path = PathBuf::from("static/json/articleCards.json");
-        let cards = ArticleCard::from(path);
+        let cards = ArticleCard::from_json(path);
 
         let category = "test";
         let result = cards.in_category(category);
@@ -205,7 +211,7 @@ mod test {
     #[test]
     fn vec_tag_assert() {
         let path = PathBuf::from("static/json/articleCards.json");
-        let cards = ArticleCard::from(path);
+        let cards = ArticleCard::from_json(path);
 
         let tag = "rust";
         let result = cards.has_tag(tag);
@@ -221,7 +227,7 @@ mod test {
     #[test]
     fn vec_both_assert() {
         let path = PathBuf::from("static/json/articleCards.json");
-        let cards = ArticleCard::from(path);
+        let cards = ArticleCard::from_json(path);
 
         let category = "test";
         let tag = "rust";
